@@ -6,8 +6,19 @@ export const memoryService = {
   loadSettings(): EveSettings {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-      if (!data) return DEFAULT_SETTINGS;
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+      let parsed: EveSettings = data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : { ...DEFAULT_SETTINGS };
+
+      // Automatically migrate deprecated model names to gemini-3.8-flash
+      if (!parsed.modelName || parsed.modelName.includes('1.5') || parsed.modelName === 'gemini-1.5-flash') {
+        parsed.modelName = 'gemini-3.8-flash';
+      }
+
+      // If no API key in localStorage, check environment variables (.env.local)
+      if (!parsed.apiKey && (import.meta as any).env?.VITE_GEMINI_API_KEY) {
+        parsed.apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
+      }
+
+      return parsed;
     } catch {
       return DEFAULT_SETTINGS;
     }

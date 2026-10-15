@@ -30,10 +30,12 @@ export class AIService {
       return toolResult;
     }
 
-    // 2. Real Gemini API Integration (if API key is supplied)
-    if (settings.apiKey && settings.apiKey.trim().length > 5) {
+    // 2. Real Gemini API Integration (if API key is supplied in settings or .env)
+    const activeApiKey = (settings.apiKey || (import.meta as any).env?.VITE_GEMINI_API_KEY || '').trim();
+    if (activeApiKey && activeApiKey.length > 5) {
       try {
-        return await this.callGeminiAPI(trimmed, history, settings, onChunk);
+        const effectiveSettings = { ...settings, apiKey: activeApiKey };
+        return await this.callGeminiAPI(trimmed, history, effectiveSettings, onChunk);
       } catch (err: any) {
         console.warn('Gemini API call failed, falling back to neural matrix engine:', err);
         // Fall back gracefully with clear error context
@@ -142,9 +144,11 @@ export class AIService {
     settings: EveSettings,
     onChunk?: (partialText: string) => void
   ): Promise<AIResponseResult> {
-    const model = settings.modelName || 'gemini-1.5-flash';
+    let model = settings.modelName || 'gemini-3.8-flash';
+    if (!model || model.includes('1.5') || model === 'gemini-1.5-flash') {
+      model = 'gemini-3.8-flash';
+    }
     const apiKey = settings.apiKey;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const formattedHistory = history.slice(-8).map((m) => ({
       role: m.sender === 'user' ? 'user' : 'model',
@@ -168,11 +172,25 @@ export class AIService {
       },
     };
 
-    const response = await fetch(url, {
+    let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    let response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+
+    // If initial model is not supported, automatically retry with next-gen gemini-3.8-flash
+    if (!response.ok && model !== 'gemini-3.8-flash') {
+      url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+      const retryResponse = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (retryResponse.ok) {
+        response = retryResponse;
+      }
+    }
 
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({}));

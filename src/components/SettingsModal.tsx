@@ -166,9 +166,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 fontSize: '0.85rem',
               }}
             >
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra-fast, Recommended)</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Reasoning)</option>
-              <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Next-Gen)</option>
+              <option value="gemini-3.8-flash">Gemini 3.8 Flash (Next-Gen, Recommended)</option>
+              <option value="gemini-3.7-flash">Gemini 3.7 Flash (Hybrid Reasoning)</option>
+              <option value="gemini-3.6-flash">Gemini 3.6 Flash (Fast)</option>
+              <option value="gemini-4-argon">Gemini 4 Argon (Deep Cognition)</option>
             </select>
           </div>
 

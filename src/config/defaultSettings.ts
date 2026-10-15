@@ -3,7 +3,7 @@ import type { EveSettings } from '../types/eve';
 export const DEFAULT_SETTINGS: EveSettings = {
   apiKey: '',
   apiProvider: 'gemini',
-  modelName: 'gemini-1.5-flash',
+  modelName: 'gemini-3.8-flash',
   voiceEnabled: true,
   voiceSpeed: 1.05,
   voicePitch: 1.0,
